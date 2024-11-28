@@ -1,10 +1,30 @@
 server:
   port: 9090
 
+#resilience4j:
+#  circuitbreaker:
+#    instances:
+#      myCircuitBreaker:
+#        registerHealthIndicator: true
+#        failureRateThreshold: 50
+#        waitDurationInOpenState: 5s
+#        permittedNumberOfCallsInHalfOpenState: 3
+#        slidingWindowType: COUNT_BASED
+#        slidingWindowSize: 10
+#  retryInstances:
+#    instances:
+#      myCircuitBreaker:
+#        maxAttempts: 3
+#        waitDuration: 500ms
+
+
 spring:
   application:
     name: Community Gateway Service
   cloud:
+#    circuitbreaker:
+#      resilience4j:
+#        enabled: true
     gateway:
       routes:
         - id: posts-route
@@ -17,10 +37,13 @@ spring:
         - id: comments-route
           uri: http://localhost:8082
           predicates:
-            - Path=/comments
+            - Path=/comments/**
           filters:
             - PrefixPath=/api
-
+            - name: CircuitBreaker
+              args:
+                name: myCircuitBreaker
+                fallbackUri: forward:/fallback/commentService
         - id: community-route
           uri: http://localhost:8084
           predicates:
